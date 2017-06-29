@@ -187,6 +187,25 @@ AFLAGS		:=
 LDFLAGS		:=
 CXXFLAGS    := -std=c++11
 
+# Check that the same compiler is used for kernel and user space
+#ifneq (${CONFIG_USER_COMPILER},)
+#    ifneq (${CONFIG_USER_COMPILER}, ${CONFIG_KERNEL_COMPILER})
+#        $(error ${CONFIG_KERNEL_COMPILER} should equal ${CONFIG_USER_COMPILER} for cc-option to work)
+#    endif
+#endif
+
+CLANG=$(words $(filter "clang", ${CONFIG_KERNEL_COMPILER} ${CONFIG_USER_COMPILER}))
+ifeq (${CLANG},2)
+    include $(COMMON_PATH)/Makefile.clang.flags
+    ifeq (${CLANG_TARGET_TRIPPLE},)
+        $(warning CLANG_TARGET_TRIPPLE needs to be set in Makefile.clang.flags)
+    endif
+    TARGET_TRIPPLE=--target=${CLANG_TARGET_TRIPPLE}
+    CC = ${CCACHE} clang ${TARGET_TRIPPLE}
+else ifeq (${CLANG},1)
+    $(warning When compiling with clang both CONFIG_USER_COMPILER and CONFIG_KERNEL_COMPILER has to be set to "clang")
+endif
+
 export AS CC LD CPP AR NM CFLAGS CPPFLAGS AFLAGS LDFLAGS CXXFLAGS
 
 PHONY += scripts_basic

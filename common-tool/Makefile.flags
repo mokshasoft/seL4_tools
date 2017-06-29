@@ -53,7 +53,7 @@ ifeq ($(CONFIG_ARCH_IA32),y)
 	ccflags-y += $(call cc-option,-m32)
 
 	ldflags-y += -Wl,-m,elf_i386
-	asflags-y += -Wa,--32
+	asflags-y += $(call as-option, -Wa$(comma)--32,)
 
 	DEFINES += IA32
 	DEFINES += ARCH_IA32
@@ -74,11 +74,11 @@ ifeq ($(CONFIG_ARCH_X86_64),y)
 	cflags-y += $(call cc-option,-m64)
 	cflags-y += $(call cc-option, -fno-asynchronous-unwind-tables,)
 	ldflags-y  += -Wl,-m -Wl,elf_x86_64
-	asflags-y  += -Wa,--64
+	asflags-y  += $(call as-option, -Wa$(comma)--64,)
 	NK_LDFLAGS += -Wl,-m -Wl,elf_x86_64
 	NK_CFLAGS  += -m64
 	NK_CFLAGS  += -mno-red-zone
-	NK_ASFLAGS += -Wa,--64
+	NK_ASFLAGS += $(call as-option, -Wa$(comma)--64,)
 	DEFINES += X86_64
 	DEFINES += __KERNEL_64__
 	export __X86_64__ = y

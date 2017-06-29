@@ -37,6 +37,11 @@ CONFIG_USER_COMPILER:=$(patsubst %",%,$(patsubst "%,%,${CONFIG_USER_COMPILER}))
 #")") Help syntax-highlighting editors.
 ifeq (${CONFIG_USER_COMPILER},)
   CC := $(CCACHE) $(TOOLPREFIX)gcc
+else ifeq (${CONFIG_USER_COMPILER},clang)
+  ifeq (${CLANG_TARGET_TRIPPLE},)
+    $(warning CLANG_TARGET_TRIPPLE not set in Makefile.clang.flags)
+  endif
+  CC := $(CCACHE) ${CONFIG_USER_COMPILER} --target=${CLANG_TARGET_TRIPPLE}
 else
   CC := $(CCACHE) ${CONFIG_USER_COMPILER}
 endif
@@ -82,8 +87,16 @@ STARTGROUP := -Wl,--start-group
 ENDGROUP := -Wl,--end-group
 
 ifeq (${CONFIG_USER_CFLAGS},)
-    CFLAGS += $(WARNINGS:%=-W%) -nostdinc -std=gnu11
-    CXXFLAGS += $(WARNINGS:%=-W%) -nostdinc $(call cc-option,-std=gnu++14,-std=gnu++98)
+    ifeq (${CONFIG_USER_COMPILER},clang)
+        # -nobuiltininc should be used for arm but not for x86
+        NOSTDINC :=
+    else
+        NOSTDINC := -nostdinc
+    endif
+
+    CFLAGS += $(WARNINGS:%=-W%) ${NOSTDINC} -std=gnu11
+    CXXFLAGS += $(WARNINGS:%=-W%) ${NOSTDINC} $(call cc-option,-std=gnu++14,-std=gnu++98)
+
 
     ifeq (${CONFIG_USER_OPTIMISATION_Os},y)
         CFLAGS += -Os
@@ -152,10 +165,18 @@ ENTRY_POINT ?= _start
 # Force start symbol to be linked in if need be - the user may already have it in a
 # .o file, otherwise this will pull it from a library such as
 # libsel4platsupport.
-LDFLAGS += -u ${ENTRY_POINT}
+ifeq (${CONFIG_USER_COMPILER},clang)
+    LDFLAGS += --force-link ${ENTRY_POINT}
+else
+    LDFLAGS += -u ${ENTRY_POINT}
+endif
 
 # Set the entry point
-LDFLAGS += -e ${ENTRY_POINT}
+ifeq (${CONFIG_USER_COMPILER},clang)
+    LDFLAGS += -Wl,-e${ENTRY_POINT}
+else
+    LDFLAGS += -e ${ENTRY_POINT}
+endif
 
 PAGE_SIZE ?= 0x1000
 
