@@ -41,6 +41,9 @@ def parse_args():
     parser.add_argument('--extra-cpu-opts', dest='qemu_sim_extra_cpu_opts',type=str,
             help="Additional cpu options to append onto the existing CPU options",
             default="")
+    parser.add_argument('-d', '--gdb', dest="qemu_gdb", action='store_true',
+            help="Open a gdbserver on TCP port 1234")
+
     args = parser.parse_args()
     return args
 
@@ -62,8 +65,12 @@ if __name__ == "__main__":
 
     qemu_sim_mem_size_entry = "-m size=" + args.qemu_sim_mem_size
 
+    qemu_gdb_command = ""
+    if args.qemu_gdb:
+        qemu_gdb_command = "-s -S"
+
     qemu_simulate_command_opts = [args.qemu_sim_binary, qemu_sim_machine_entry, qemu_sim_cpu_entry, args.qemu_sim_graphic_opt,
-            args.qemu_sim_serial_opt, qemu_sim_mem_size_entry, args.qemu_sim_extra_args, qemu_sim_images_entry]
+            args.qemu_sim_serial_opt, qemu_sim_mem_size_entry, args.qemu_sim_extra_args, qemu_sim_images_entry, qemu_gdb_command]
     qemu_simulate_command = " ".join(qemu_simulate_command_opts)
 
     print(qemu_simulate_command)
